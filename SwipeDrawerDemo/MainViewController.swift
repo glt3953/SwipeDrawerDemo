@@ -338,7 +338,7 @@ class MainViewController: UIViewController {
         }
     }
     
-    private func openLeftDrawer(animated: Bool = true) {
+    @objc public func openLeftDrawer(animated: Bool = true) {
         // 显示遮罩
         dimView.isHidden = false
         currentDrawer = .left
@@ -364,7 +364,7 @@ class MainViewController: UIViewController {
         }
     }
     
-    private func closeLeftDrawer(animated: Bool = true) {
+    @objc public func closeLeftDrawer(animated: Bool = true) {
         let drawerWidth = UIScreen.main.bounds.width * 0.8
         
         if animated {
@@ -391,7 +391,7 @@ class MainViewController: UIViewController {
         }
     }
     
-    private func openRightDrawer(animated: Bool = true) {
+    @objc public func openRightDrawer(animated: Bool = true) {
         // 显示遮罩
         dimView.isHidden = false
         currentDrawer = .right
@@ -413,7 +413,7 @@ class MainViewController: UIViewController {
         }
     }
     
-    private func closeRightDrawer(animated: Bool = true) {
+    @objc public func closeRightDrawer(animated: Bool = true) {
         let drawerX = UIScreen.main.bounds.width
         
         if animated {

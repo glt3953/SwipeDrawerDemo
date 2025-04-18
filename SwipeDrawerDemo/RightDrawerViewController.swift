@@ -145,8 +145,8 @@ class RightDrawerViewController: UIViewController {
     
     @objc private func closeButtonTapped() {
         if let mainVC = parent as? MainViewController {
-            // 假设MainViewController有一个closeRightDrawer方法
-            mainVC.perform(NSSelectorFromString("closeRightDrawer"))
+            // 直接调用主视图控制器的方法
+            mainVC.closeRightDrawer()
         }
     }
     
