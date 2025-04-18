@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5AA5B2C82DB2035400DC25D7 /* LeftDrawerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AA5B2C72DB2035400DC25D7 /* LeftDrawerViewController.swift */; };
 		D123456789ABCDEF000000001 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D123456789ABCDEF000000010 /* AppDelegate.swift */; };
 		D123456789ABCDEF000000002 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D123456789ABCDEF000000011 /* MainViewController.swift */; };
 		D123456789ABCDEF000000003 /* RightDrawerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D123456789ABCDEF000000012 /* RightDrawerViewController.swift */; };
@@ -15,6 +16,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		5AA5B2C72DB2035400DC25D7 /* LeftDrawerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeftDrawerViewController.swift; sourceTree = "<group>"; };
 		D123456789ABCDEF000000006 /* SwipeRightDrawerDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwipeRightDrawerDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D123456789ABCDEF000000010 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		D123456789ABCDEF000000011 /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
@@ -46,6 +48,7 @@
 		D123456789ABCDEF000000009 /* SwipeDrawerDemo */ = {
 			isa = PBXGroup;
 			children = (
+				5AA5B2C72DB2035400DC25D7 /* LeftDrawerViewController.swift */,
 				D123456789ABCDEF000000010 /* AppDelegate.swift */,
 				D123456789ABCDEF000000011 /* MainViewController.swift */,
 				D123456789ABCDEF000000012 /* RightDrawerViewController.swift */,
@@ -134,6 +137,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5AA5B2C82DB2035400DC25D7 /* LeftDrawerViewController.swift in Sources */,
 				D123456789ABCDEF000000002 /* MainViewController.swift in Sources */,
 				D123456789ABCDEF000000001 /* AppDelegate.swift in Sources */,
 				D123456789ABCDEF000000003 /* RightDrawerViewController.swift in Sources */,

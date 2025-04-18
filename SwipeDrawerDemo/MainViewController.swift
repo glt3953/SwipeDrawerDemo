@@ -5,10 +5,21 @@ class MainViewController: UIViewController {
     // 右侧抽屉视图控制器
     private lazy var rightDrawerViewController = RightDrawerViewController()
     
+    // 左侧抽屉视图控制器
+    private lazy var leftDrawerViewController = LeftDrawerViewController()
+    
     // 右侧抽屉视图
     private lazy var rightDrawerView: UIView = {
         let view = rightDrawerViewController.view!
         view.frame = CGRect(x: UIScreen.main.bounds.width, y: 0, width: UIScreen.main.bounds.width * 0.8, height: UIScreen.main.bounds.height)
+        view.backgroundColor = .white
+        return view
+    }()
+    
+    // 左侧抽屉视图
+    private lazy var leftDrawerView: UIView = {
+        let view = leftDrawerViewController.view!
+        view.frame = CGRect(x: -UIScreen.main.bounds.width * 0.8, y: 0, width: UIScreen.main.bounds.width * 0.8, height: UIScreen.main.bounds.height)
         view.backgroundColor = .white
         return view
     }()
@@ -112,6 +123,15 @@ class MainViewController: UIViewController {
         return button
     }()
     
+    // 记录当前显示的抽屉类型
+    private enum DrawerType {
+        case none
+        case left
+        case right
+    }
+    
+    private var currentDrawer: DrawerType = .none
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -155,6 +175,11 @@ class MainViewController: UIViewController {
         // 添加遮罩视图
         view.addSubview(dimView)
         
+        // 添加左侧抽屉视图
+        view.addSubview(leftDrawerView)
+        addChild(leftDrawerViewController)
+        leftDrawerViewController.didMove(toParent: self)
+        
         // 添加右侧抽屉视图
         view.addSubview(rightDrawerView)
         addChild(rightDrawerViewController)
@@ -162,15 +187,15 @@ class MainViewController: UIViewController {
     }
     
     private func setupGestures() {
-        // 添加右滑手势
-        let swipeRightGesture = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipeGesture(_:)))
-        swipeRightGesture.direction = .left
-        view.addGestureRecognizer(swipeRightGesture)
+        // 添加右滑手势打开左侧抽屉
+        let swipeRightToOpenGesture = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipeGesture(_:)))
+        swipeRightToOpenGesture.direction = .right
+        view.addGestureRecognizer(swipeRightToOpenGesture)
         
-        // 添加左滑手势关闭抽屉
-        let swipeLeftGesture = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipeGesture(_:)))
-        swipeLeftGesture.direction = .right
-        view.addGestureRecognizer(swipeLeftGesture)
+        // 添加左滑手势打开右侧抽屉
+        let swipeLeftToOpenGesture = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipeGesture(_:)))
+        swipeLeftToOpenGesture.direction = .left
+        view.addGestureRecognizer(swipeLeftToOpenGesture)
         
         // 添加拖拽手势
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
@@ -203,59 +228,109 @@ class MainViewController: UIViewController {
     
     @objc private func handleSwipeGesture(_ gesture: UISwipeGestureRecognizer) {
         if gesture.direction == .left {
-            openRightDrawer()
+            if currentDrawer == .left {
+                closeLeftDrawer()
+            } else if currentDrawer == .none {
+                openRightDrawer()
+            }
         } else if gesture.direction == .right {
-            closeRightDrawer()
+            if currentDrawer == .right {
+                closeRightDrawer()
+            } else if currentDrawer == .none {
+                openLeftDrawer()
+            }
         }
     }
     
     @objc private func handleTapGesture(_ gesture: UITapGestureRecognizer) {
-        closeRightDrawer()
+        if currentDrawer == .left {
+            closeLeftDrawer()
+        } else if currentDrawer == .right {
+            closeRightDrawer()
+        }
     }
     
     @objc private func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
         let translation = gesture.translation(in: view)
         let velocity = gesture.velocity(in: view)
         let drawerWidth = UIScreen.main.bounds.width * 0.8
-        let minX = UIScreen.main.bounds.width * 0.2
-        let maxX = UIScreen.main.bounds.width
+        let screenWidth = UIScreen.main.bounds.width
         
         switch gesture.state {
         case .began:
-            // 如果抽屉没有显示，而用户向左滑动，不做任何操作
-            if rightDrawerView.frame.origin.x >= maxX && velocity.x < 0 {
-                return
+            // 根据滑动方向和当前状态决定操作
+            if currentDrawer == .none {
+                // 未打开抽屉时，根据滑动方向确定打开哪个抽屉
+                dimView.isHidden = false
+                if velocity.x > 0 {
+                    // 向右滑，准备打开左侧抽屉
+                    currentDrawer = .left
+                } else if velocity.x < 0 {
+                    // 向左滑，准备打开右侧抽屉
+                    currentDrawer = .right
+                }
             }
-            // 如果抽屉已显示，确保遮罩可见
-            dimView.isHidden = false
             
         case .changed:
-            // 计算抽屉新的位置
-            var newX = rightDrawerView.frame.origin.x + translation.x
-            
-            // 限制抽屉的位置范围
-            newX = max(minX, min(maxX, newX))
-            
-            // 更新抽屉位置
-            rightDrawerView.frame.origin.x = newX
-            
-            // 计算并更新遮罩的透明度
-            let progress = 1 - ((newX - minX) / (maxX - minX))
-            dimView.alpha = 0.5 * progress
+            if currentDrawer == .left {
+                // 处理左侧抽屉的拖动
+                let maxContentX = drawerWidth // 内容最大移动距离
+                var newContentX = min(maxContentX, max(0, contentView.frame.origin.x + translation.x))
+                
+                // 更新主内容视图位置
+                contentView.frame.origin.x = newContentX
+                
+                // 更新左侧抽屉位置
+                leftDrawerView.frame.origin.x = newContentX - drawerWidth
+                
+                // 计算并更新遮罩的透明度
+                let progress = newContentX / drawerWidth
+                dimView.alpha = 0.5 * progress
+                
+            } else if currentDrawer == .right {
+                // 处理右侧抽屉的拖动
+                let minX = screenWidth * 0.2
+                let maxX = screenWidth
+                var newX = rightDrawerView.frame.origin.x + translation.x
+                
+                // 限制抽屉的位置范围
+                newX = max(minX, min(maxX, newX))
+                
+                // 更新抽屉位置
+                rightDrawerView.frame.origin.x = newX
+                
+                // 计算并更新遮罩的透明度
+                let progress = 1 - ((newX - minX) / (maxX - minX))
+                dimView.alpha = 0.5 * progress
+            }
             
             // 重置translation，避免累积效果
             gesture.setTranslation(.zero, in: view)
             
         case .ended, .cancelled:
-            // 根据最终速度和位置决定是打开还是关闭抽屉
-            let threshold: CGFloat = maxX - (drawerWidth / 2)
-            
-            if velocity.x > 500 || rightDrawerView.frame.origin.x > threshold {
-                // 关闭抽屉
-                closeRightDrawer()
-            } else {
-                // 打开抽屉
-                openRightDrawer()
+            if currentDrawer == .left {
+                // 左侧抽屉处理
+                let threshold = drawerWidth / 2
+                
+                if velocity.x < -500 || contentView.frame.origin.x < threshold {
+                    // 关闭左侧抽屉
+                    closeLeftDrawer()
+                } else {
+                    // 打开左侧抽屉
+                    openLeftDrawer()
+                }
+                
+            } else if currentDrawer == .right {
+                // 右侧抽屉处理
+                let threshold: CGFloat = screenWidth - (drawerWidth / 2)
+                
+                if velocity.x > 500 || rightDrawerView.frame.origin.x > threshold {
+                    // 关闭抽屉
+                    closeRightDrawer()
+                } else {
+                    // 打开抽屉
+                    openRightDrawer()
+                }
             }
             
         default:
@@ -263,9 +338,63 @@ class MainViewController: UIViewController {
         }
     }
     
+    private func openLeftDrawer(animated: Bool = true) {
+        // 显示遮罩
+        dimView.isHidden = false
+        currentDrawer = .left
+        
+        let drawerWidth = UIScreen.main.bounds.width * 0.8
+        
+        if animated {
+            UIView.animate(withDuration: 0.3) {
+                // 移动主内容视图
+                self.contentView.frame.origin.x = drawerWidth
+                
+                // 移动左侧抽屉
+                self.leftDrawerView.frame.origin.x = 0
+                
+                // 显示遮罩
+                self.dimView.alpha = 0.5
+            }
+        } else {
+            // 无动画直接设置位置
+            self.contentView.frame.origin.x = drawerWidth
+            self.leftDrawerView.frame.origin.x = 0
+            self.dimView.alpha = 0.5
+        }
+    }
+    
+    private func closeLeftDrawer(animated: Bool = true) {
+        let drawerWidth = UIScreen.main.bounds.width * 0.8
+        
+        if animated {
+            UIView.animate(withDuration: 0.3, animations: {
+                // 移动主内容视图回原位
+                self.contentView.frame.origin.x = 0
+                
+                // 移动左侧抽屉
+                self.leftDrawerView.frame.origin.x = -drawerWidth
+                
+                // 隐藏遮罩
+                self.dimView.alpha = 0
+            }) { _ in
+                self.dimView.isHidden = true
+                self.currentDrawer = .none
+            }
+        } else {
+            // 无动画直接设置位置
+            self.contentView.frame.origin.x = 0
+            self.leftDrawerView.frame.origin.x = -drawerWidth
+            self.dimView.alpha = 0
+            self.dimView.isHidden = true
+            self.currentDrawer = .none
+        }
+    }
+    
     private func openRightDrawer(animated: Bool = true) {
         // 显示遮罩
         dimView.isHidden = false
+        currentDrawer = .right
         
         let drawerX = UIScreen.main.bounds.width * 0.2
         
@@ -296,12 +425,14 @@ class MainViewController: UIViewController {
                 self.dimView.alpha = 0
             }) { _ in
                 self.dimView.isHidden = true
+                self.currentDrawer = .none
             }
         } else {
             // 无动画直接设置位置
             self.rightDrawerView.frame.origin.x = drawerX
             self.dimView.alpha = 0
             self.dimView.isHidden = true
+            self.currentDrawer = .none
         }
     }
 } 
