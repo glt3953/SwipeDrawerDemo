@@ -171,6 +171,10 @@ class MainViewController: UIViewController {
         let swipeLeftGesture = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipeGesture(_:)))
         swipeLeftGesture.direction = .right
         view.addGestureRecognizer(swipeLeftGesture)
+        
+        // 添加拖拽手势
+        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
+        view.addGestureRecognizer(panGesture)
     }
     
     private func createAIButton(title: String, iconName: String) -> UIButton {
@@ -209,27 +213,94 @@ class MainViewController: UIViewController {
         closeRightDrawer()
     }
     
-    private func openRightDrawer() {
+    @objc private func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
+        let translation = gesture.translation(in: view)
+        let velocity = gesture.velocity(in: view)
+        let drawerWidth = UIScreen.main.bounds.width * 0.8
+        let minX = UIScreen.main.bounds.width * 0.2
+        let maxX = UIScreen.main.bounds.width
+        
+        switch gesture.state {
+        case .began:
+            // 如果抽屉没有显示，而用户向左滑动，不做任何操作
+            if rightDrawerView.frame.origin.x >= maxX && velocity.x < 0 {
+                return
+            }
+            // 如果抽屉已显示，确保遮罩可见
+            dimView.isHidden = false
+            
+        case .changed:
+            // 计算抽屉新的位置
+            var newX = rightDrawerView.frame.origin.x + translation.x
+            
+            // 限制抽屉的位置范围
+            newX = max(minX, min(maxX, newX))
+            
+            // 更新抽屉位置
+            rightDrawerView.frame.origin.x = newX
+            
+            // 计算并更新遮罩的透明度
+            let progress = 1 - ((newX - minX) / (maxX - minX))
+            dimView.alpha = 0.5 * progress
+            
+            // 重置translation，避免累积效果
+            gesture.setTranslation(.zero, in: view)
+            
+        case .ended, .cancelled:
+            // 根据最终速度和位置决定是打开还是关闭抽屉
+            let threshold: CGFloat = maxX - (drawerWidth / 2)
+            
+            if velocity.x > 500 || rightDrawerView.frame.origin.x > threshold {
+                // 关闭抽屉
+                closeRightDrawer()
+            } else {
+                // 打开抽屉
+                openRightDrawer()
+            }
+            
+        default:
+            break
+        }
+    }
+    
+    private func openRightDrawer(animated: Bool = true) {
         // 显示遮罩
         dimView.isHidden = false
         
-        UIView.animate(withDuration: 0.3) {
-            // 移动右侧抽屉
-            self.rightDrawerView.frame.origin.x = UIScreen.main.bounds.width * 0.2
-            
-            // 显示遮罩
+        let drawerX = UIScreen.main.bounds.width * 0.2
+        
+        if animated {
+            UIView.animate(withDuration: 0.3) {
+                // 移动右侧抽屉
+                self.rightDrawerView.frame.origin.x = drawerX
+                
+                // 显示遮罩
+                self.dimView.alpha = 0.5
+            }
+        } else {
+            // 无动画直接设置位置
+            self.rightDrawerView.frame.origin.x = drawerX
             self.dimView.alpha = 0.5
         }
     }
     
-    private func closeRightDrawer() {
-        UIView.animate(withDuration: 0.3, animations: {
-            // 移动右侧抽屉
-            self.rightDrawerView.frame.origin.x = UIScreen.main.bounds.width
-            
-            // 隐藏遮罩
+    private func closeRightDrawer(animated: Bool = true) {
+        let drawerX = UIScreen.main.bounds.width
+        
+        if animated {
+            UIView.animate(withDuration: 0.3, animations: {
+                // 移动右侧抽屉
+                self.rightDrawerView.frame.origin.x = drawerX
+                
+                // 隐藏遮罩
+                self.dimView.alpha = 0
+            }) { _ in
+                self.dimView.isHidden = true
+            }
+        } else {
+            // 无动画直接设置位置
+            self.rightDrawerView.frame.origin.x = drawerX
             self.dimView.alpha = 0
-        }) { _ in
             self.dimView.isHidden = true
         }
     }
